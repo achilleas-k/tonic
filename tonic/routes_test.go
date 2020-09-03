@@ -6,6 +6,8 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"testing"
+
+	"github.com/G-Node/tonic/tonic/db"
 )
 
 const port = uint16(7357)
@@ -80,4 +82,28 @@ func TestReqLoginRedirects(t *testing.T) {
 	checkReqStatus(t, client, http.MethodPost, "/", http.StatusFound)
 	checkReqStatus(t, client, http.MethodGet, "/log", http.StatusFound)
 	checkReqStatus(t, client, http.MethodGet, "/log/42", http.StatusFound)
+}
+
+func TestAuthedRoutes(t *testing.T) {
+	mockGIN()
+	srv := newTestServiceWithRoutes(t)
+	defer srv.Stop()
+
+	sess := db.NewSession("fake token")
+	job := new(db.Job)
+	job.ValueMap = map[string]string{
+		"key1":       "value1",
+		"key2":       "value2",
+		"anotherkey": "anothervalue",
+		"onemore":    "lastvalue",
+	}
+	job.UserID = 42
+
+	srv.db.InsertSession(sess)
+	client := httpClientWithCookie(sess.ID)
+	checkReqStatus(t, client, http.MethodGet, "/", http.StatusOK)
+	checkReqStatus(t, client, http.MethodPost, "/", http.StatusOK)
+	// checkReqStatus(t, client, http.MethodGet, "/log", http.Status)
+	checkReqStatus(t, client, http.MethodGet, "/log/42", http.StatusNotFound)
+
 }
