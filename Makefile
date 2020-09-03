@@ -1,6 +1,6 @@
 SOURCES = $(shell find . -type f -iname "*.go") go.mod go.sum
 
-.PHONY: clean test showcoverage
+.PHONY: clean test coverreport
 
 all: utonics
 
@@ -11,8 +11,8 @@ utonics: $(SOURCES)
 test: $(SOURCES)
 	go test -race -coverpkg=./... -coverprofile=coverage ./...
 
-showcoverage: test
-	go tool cover -html=coverage
+coverreport: test
+	go tool cover -html=coverage -o coverage.html
 
 clean:
 	rm -rf coverage build/
